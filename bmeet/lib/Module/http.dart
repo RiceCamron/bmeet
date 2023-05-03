@@ -9,13 +9,19 @@ class RequestResult {
 }
 
 const PROTOCOL = "http";
-const DOMAIN = "192.168.43.30:8001";
+const DOMAIN = "192.168.1.213:8001";
+
+// const DOMAIN = "45.8.118.246:8000";
+
+// const DOMAIN = "localhost:8000";
+
 
 Future<RequestResult> http_get(String route, [dynamic data]) async {
   var dataStr = jsonEncode(data);
   var url = "$PROTOCOL://$DOMAIN/$route?data=$dataStr";
   var result = await http.get(Uri.parse(url));
-  return RequestResult(true, jsonDecode(result.body));
+  var decode = jsonDecode(result.body);
+  return RequestResult(true, decode);
 }
 
 Future<RequestResult> http_post(String route, [dynamic data]) async {

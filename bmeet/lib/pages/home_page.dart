@@ -1,3 +1,6 @@
+import 'dart:ffi';
+
+import 'package:bmeet/Module/http.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -11,32 +14,101 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
+class Meet {
+  int id;
+  String from_id;
+  String meet_name;
+  String description;
+  String meet_date;
+  String meet_time;
+  int member_id;
+  int task_id;
+  String create_at;
+  int notification_id;
+  double latitude_location;
+  double long_location;
+
+  Meet(
+      this.id,
+      this.from_id,
+      this.meet_name,
+      this.description,
+      this.meet_date,
+      this.meet_time,
+      this.member_id,
+      this.task_id,
+      this.create_at,
+      this.notification_id,
+      this.latitude_location,
+      this.long_location);
+}
+
 class _HomePageState extends State<HomePage> {
   int _currentPage = 0;
+  var _pages = [];
 
-  var _pages = [
-    Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        meetCard.MeetCard(),
-        meetCard.MeetCard(),
-      ],
-    ),
-    Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        partnerCard.PartnerCard(),
-        partnerCard.PartnerCard(),
-      ],
-    ),
-    Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        notificationCard.NotificationCard(),
-        notificationCard.NotificationCard(),
-      ],
-    ),
-  ];
+  List<Meet> meets = [];
+
+  @override
+  void initState() {
+    super.initState();
+    refreshMeets();
+    _pages = [
+      RefreshIndicator(
+        onRefresh: refreshMeets,
+        child: ListView.separated(
+          itemCount: meets.length,
+          itemBuilder: (context, i) => ListTile(
+            leading: Icon(Icons.person),
+            title: Text(meets[i].meet_name),
+          ),
+          separatorBuilder: (context, i) => Divider(),
+        ),
+      ),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          partnerCard.PartnerCard(),
+          partnerCard.PartnerCard(),
+        ],
+      ),
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          notificationCard.NotificationCard(),
+          notificationCard.NotificationCard(),
+        ],
+      ),
+    ];
+  }
+
+  Future<void> refreshMeets() async {
+    var result = await http_post('/meets');
+
+    print(result);
+    if (result.ok) {
+      setState(() {
+        meets.clear();
+        var in_users = result.data as List<dynamic>;
+        in_users.forEach((in_user) {
+          meets.add(Meet(
+            in_user['id'],
+            in_user['from_id'],
+            in_user['meet_name'],
+            in_user['description'],
+            in_user['meet_date'],
+            in_user['meet_time'],
+            in_user['member_id'],
+            in_user['task_id'],
+            in_user['create_at'],
+            in_user['notification_id'],
+            in_user['latitude_location'],
+            in_user['long_location'],
+          ));
+        });
+      });
+    }
+  }
 
   var _appBarTitles = [
     'Главная',
@@ -72,15 +144,21 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Color.fromARGB(255, 3, 27, 47),
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home,),
+            icon: Icon(
+              Icons.home,
+            ),
             label: "Главная",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.people,),
+            icon: Icon(
+              Icons.people,
+            ),
             label: "Патнеры",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.sms,),
+            icon: Icon(
+              Icons.sms,
+            ),
             label: "Уведомления",
           ),
         ],
